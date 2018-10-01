@@ -1,0 +1,81 @@
+package create
+
+import (
+	"flag"
+	"fmt"
+	"os"
+
+	"github.com/hashicorp/consul/agent/connect"
+
+	"github.com/hashicorp/consul/command/flags"
+	"github.com/mitchellh/cli"
+)
+
+func New(ui cli.Ui) *cmd {
+	c := &cmd{UI: ui}
+	c.init()
+	return c
+}
+
+type cmd struct {
+	UI    cli.Ui
+	flags *flag.FlagSet
+	help  string
+}
+
+func (c *cmd) init() {
+	c.flags = flag.NewFlagSet("", flag.ContinueOnError)
+	c.help = flags.Usage(help, c.flags)
+}
+
+func (c *cmd) Run(args []string) int {
+	if err := c.flags.Parse(args); err != nil {
+		if err == flag.ErrHelp {
+			return 0
+		}
+		c.UI.Error(fmt.Sprintf("Failed to parse args: %v", err))
+		return 1
+	}
+	sn, err := connect.GenerateSerialNumber()
+	if err != nil {
+		c.UI.Error(err.Error())
+		return 1
+	}
+	s, pk, err := connect.GeneratePrivateKey()
+	if err != nil {
+		c.UI.Error(err.Error())
+	}
+	pkFile, err := os.Create("consul-ca-key.pem")
+	if err != nil {
+		c.UI.Error(err.Error())
+	}
+	pkFile.WriteString(pk)
+	c.UI.Output("==> saved consul-ca-key.pem")
+	ca, err := connect.GenerateCA(s, sn, nil)
+	if err != nil {
+		c.UI.Error(err.Error())
+	}
+	caFile, err := os.Create("consul-ca.pem")
+	if err != nil {
+		c.UI.Error(err.Error())
+	}
+	caFile.WriteString(ca)
+	c.UI.Output("==> saved consul-ca.pem")
+
+	return 0
+}
+
+func (c *cmd) Synopsis() string {
+	return synopsis
+}
+
+func (c *cmd) Help() string {
+	return c.help
+}
+
+const synopsis = "Create a new consul CA"
+const help = `
+Usage: consul tls ca
+
+  Create a new consul CA
+`
