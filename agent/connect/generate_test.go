@@ -132,5 +132,9 @@ func TestGenerateCert(t *testing.T) {
 	require.Equal(t, cert.NotBefore.Format(time.ANSIC), time.Now().UTC().Format(time.ANSIC))
 	require.Equal(t, cert.NotAfter.Format(time.ANSIC), time.Now().Add(time.Minute*60*24*365).UTC().Format(time.ANSIC))
 
-	require.Equal(t, x509.KeyUsageCertSign|x509.KeyUsageCRLSign, cert.KeyUsage)
+	require.Equal(t, x509.KeyUsageDigitalSignature|x509.KeyUsageKeyEncipherment, cert.KeyUsage)
+
+	// https://github.com/golang/go/blob/10538a8f9e2e718a47633ac5a6e90415a2c3f5f1/src/crypto/x509/verify.go#L414
+	require.Contains(t, cert.DNSNames, "localhost")
+	require.Equal(t, cert.IPAddresses[0].String(), "127.0.0.1")
 }

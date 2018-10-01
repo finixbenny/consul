@@ -11,6 +11,7 @@ import (
 	"encoding/pem"
 	"fmt"
 	"math/big"
+	"net"
 	"net/url"
 	"time"
 )
@@ -110,10 +111,7 @@ func GenerateCert(signer crypto.Signer, ca string, sn *big.Int, name string) (st
 		SerialNumber:          sn,
 		Subject:               pkix.Name{CommonName: name},
 		BasicConstraintsValid: true,
-		KeyUsage: x509.KeyUsageDataEncipherment |
-			x509.KeyUsageKeyAgreement |
-			x509.KeyUsageDigitalSignature |
-			x509.KeyUsageKeyEncipherment,
+		KeyUsage:              x509.KeyUsageDigitalSignature | x509.KeyUsageKeyEncipherment,
 		ExtKeyUsage: []x509.ExtKeyUsage{
 			x509.ExtKeyUsageClientAuth,
 			x509.ExtKeyUsageServerAuth,
@@ -122,6 +120,8 @@ func GenerateCert(signer crypto.Signer, ca string, sn *big.Int, name string) (st
 		NotAfter:     time.Now().Add(365 * 24 * time.Hour),
 		NotBefore:    time.Now(),
 		SubjectKeyId: keyID,
+		DNSNames:     []string{"localhost"},
+		IPAddresses:  []net.IP{net.ParseIP("127.0.0.1")},
 	}
 
 	parent, err := ParseCert(ca)
