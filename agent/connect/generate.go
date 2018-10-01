@@ -59,18 +59,24 @@ func GenerateCA(signer crypto.Signer, sn *big.Int, uris []*url.URL) (string, err
 
 	// Create the CA cert
 	template := x509.Certificate{
-		SerialNumber:          sn,
-		Subject:               pkix.Name{CommonName: name},
+		SerialNumber: sn,
+		Subject: pkix.Name{
+			Country:       []string{"US"},
+			PostalCode:    []string{"94105"},
+			Province:      []string{"CA"},
+			Locality:      []string{"San Francisco"},
+			StreetAddress: []string{"101 Second Street"},
+			Organization:  []string{"HashiCorp Inc."},
+			CommonName:    name,
+		},
 		URIs:                  uris,
 		BasicConstraintsValid: true,
-		KeyUsage: x509.KeyUsageCertSign |
-			x509.KeyUsageCRLSign |
-			x509.KeyUsageDigitalSignature,
-		IsCA:           true,
-		NotAfter:       time.Now().Add(10 * 365 * 24 * time.Hour),
-		NotBefore:      time.Now(),
-		AuthorityKeyId: keyID,
-		SubjectKeyId:   keyID,
+		KeyUsage:              x509.KeyUsageCertSign | x509.KeyUsageCRLSign,
+		IsCA:                  true,
+		NotAfter:              time.Now().AddDate(5, 0, 0),
+		NotBefore:             time.Now(),
+		AuthorityKeyId:        keyID,
+		SubjectKeyId:          keyID,
 	}
 
 	bs, err := x509.CreateCertificate(

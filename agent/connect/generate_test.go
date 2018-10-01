@@ -87,6 +87,13 @@ func TestGenerateCA(t *testing.T) {
 	require.Nil(t, err)
 	require.Equal(t, fmt.Sprintf("Consul CA %d", sn), cert.Subject.CommonName)
 	require.Equal(t, true, cert.IsCA)
+	require.Equal(t, true, cert.BasicConstraintsValid)
+
+	// format so that we don't take anything smaller than second into account.
+	require.Equal(t, cert.NotBefore.Format(time.ANSIC), time.Now().UTC().Format(time.ANSIC))
+	require.Equal(t, cert.NotAfter.Format(time.ANSIC), time.Now().AddDate(5, 0, 0).UTC().Format(time.ANSIC))
+
+	require.Equal(t, x509.KeyUsageCertSign|x509.KeyUsageCRLSign, cert.KeyUsage)
 }
 
 func TestGenerateCert(t *testing.T) {
@@ -109,6 +116,7 @@ func TestGenerateCert(t *testing.T) {
 	cert, err := ParseCert(certificate)
 	require.Nil(t, err)
 	require.Equal(t, cert.Subject.CommonName, name)
+	require.Equal(t, true, cert.BasicConstraintsValid)
 	signee, err := ParseSigner(pk)
 	require.Nil(t, err)
 	certID, err := KeyId(signee.Public())
@@ -123,4 +131,6 @@ func TestGenerateCert(t *testing.T) {
 	// format so that we don't take anything smaller than second into account.
 	require.Equal(t, cert.NotBefore.Format(time.ANSIC), time.Now().UTC().Format(time.ANSIC))
 	require.Equal(t, cert.NotAfter.Format(time.ANSIC), time.Now().Add(time.Minute*60*24*365).UTC().Format(time.ANSIC))
+
+	require.Equal(t, x509.KeyUsageCertSign|x509.KeyUsageCRLSign, cert.KeyUsage)
 }
