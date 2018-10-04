@@ -72,7 +72,7 @@ func GenerateCA(signer crypto.Signer, sn *big.Int, uris []*url.URL) (string, err
 		},
 		URIs:                  uris,
 		BasicConstraintsValid: true,
-		KeyUsage:              x509.KeyUsageCertSign | x509.KeyUsageCRLSign,
+		KeyUsage:              x509.KeyUsageCertSign,
 		IsCA:                  true,
 		NotAfter:              time.Now().AddDate(5, 0, 0),
 		NotBefore:             time.Now(),
