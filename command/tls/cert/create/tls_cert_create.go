@@ -75,6 +75,11 @@ func (c *cmd) Run(args []string) int {
 		c.UI.Error("Neither client or server - should not happen")
 	}
 
+	prefix := "consul-ca"
+	if len(c.flags.Args()) > 0 {
+		prefix = c.flags.Args()[0]
+	}
+
 	cert, err := ioutil.ReadFile(c.ca)
 	if err != nil {
 		c.UI.Error(err.Error())
@@ -105,7 +110,7 @@ func (c *cmd) Run(args []string) int {
 		return 1
 	}
 
-	fileName := fmt.Sprintf("consul-%s-key.pem", kind)
+	fileName := fmt.Sprintf("%s-%s-key.pem", prefix, kind)
 	pkFile, err := os.Create(fileName)
 	if err != nil {
 		c.UI.Error(err.Error())
