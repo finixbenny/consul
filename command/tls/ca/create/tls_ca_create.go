@@ -36,6 +36,11 @@ func (c *cmd) Run(args []string) int {
 		c.UI.Error(fmt.Sprintf("Failed to parse args: %v", err))
 		return 1
 	}
+	prefix := "consul-ca"
+	if len(c.flags.Args()) > 0 {
+		prefix = c.flags.Args()[0]
+	}
+
 	sn, err := connect.GenerateSerialNumber()
 	if err != nil {
 		c.UI.Error(err.Error())
@@ -45,22 +50,22 @@ func (c *cmd) Run(args []string) int {
 	if err != nil {
 		c.UI.Error(err.Error())
 	}
-	pkFile, err := os.Create("consul-ca-key.pem")
-	if err != nil {
-		c.UI.Error(err.Error())
-	}
-	pkFile.WriteString(pk)
-	c.UI.Output("==> saved consul-ca-key.pem")
 	ca, err := connect.GenerateCA(s, sn, nil)
 	if err != nil {
 		c.UI.Error(err.Error())
 	}
-	caFile, err := os.Create("consul-ca.pem")
+	caFile, err := os.Create(prefix + ".pem")
 	if err != nil {
 		c.UI.Error(err.Error())
 	}
 	caFile.WriteString(ca)
-	c.UI.Output("==> saved consul-ca.pem")
+	c.UI.Output("==> saved " + prefix + ".pem")
+	pkFile, err := os.Create(prefix + "-key.pem")
+	if err != nil {
+		c.UI.Error(err.Error())
+	}
+	pkFile.WriteString(pk)
+	c.UI.Output("==> saved " + prefix + "-key.pem")
 
 	return 0
 }
@@ -75,7 +80,7 @@ func (c *cmd) Help() string {
 
 const synopsis = "Create a new consul CA"
 const help = `
-Usage: consul tls ca
+Usage: consul tls ca filename-prefix
 
-  Create a new consul CA
+  Create a new consul CA which is written to $filename-prefix
 `

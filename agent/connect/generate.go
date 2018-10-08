@@ -144,5 +144,5 @@ func GenerateCert(signer crypto.Signer, ca string, sn *big.Int, name string) (st
 }
 
 func GenerateCSR() (string, error) {
-
+	return "", nil
 }

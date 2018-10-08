@@ -25,16 +25,16 @@ func (c *cmd) Help() string {
 
 const synopsis = `Helpers for certificates`
 const help = `
-Usage: consul tls cert <subcommand> [options]
+Usage: consul tls ca <subcommand> [options] filename-prefix
 
-  This command has subcommands for interacting with certificates
+  This command has subcommands for interacting with Certificate Authorities.
 
   Here are some simple examples, and more detailed examples are available
   in the subcommands or the documentation.
 
-	Create a certificate
+	Create a CA
 
-		$ consul tls cert create -ca-file consul-ca.pem -ca-key-file consul-ca-key.pem
+		$ consul tls ca create consul-ca
 
   For more examples, ask for subcommand help or view the documentation.
 `
