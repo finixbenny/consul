@@ -72,7 +72,7 @@ func GenerateCA(signer crypto.Signer, sn *big.Int, uris []*url.URL) (string, err
 		},
 		URIs:                  uris,
 		BasicConstraintsValid: true,
-		KeyUsage:              x509.KeyUsageCertSign,
+		KeyUsage:              x509.KeyUsageCertSign | x509.KeyUsageCRLSign,
 		IsCA:                  true,
 		NotAfter:              time.Now().AddDate(5, 0, 0),
 		NotBefore:             time.Now(),
@@ -141,4 +141,8 @@ func GenerateCert(signer crypto.Signer, ca string, sn *big.Int, name string) (st
 	}
 
 	return buf.String(), pk, nil
+}
+
+func GenerateCSR() (string, error) {
+
 }
