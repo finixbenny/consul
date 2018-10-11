@@ -75,7 +75,7 @@ func (c *cmd) Run(args []string) int {
 		c.UI.Error("Neither client or server - should not happen")
 	}
 
-	prefix := "consul-ca"
+	prefix := "consul"
 	if len(c.flags.Args()) > 0 {
 		prefix = c.flags.Args()[0]
 	}
@@ -118,7 +118,7 @@ func (c *cmd) Run(args []string) int {
 	}
 	pkFile.WriteString(priv)
 	c.UI.Output("==> saved " + fileName)
-	fileName = fmt.Sprintf("consul-%s.pem", kind)
+	fileName = fmt.Sprintf("%s-%s.pem", prefix, kind)
 	certFile, err := os.Create(fileName)
 	if err != nil {
 		c.UI.Error(err.Error())

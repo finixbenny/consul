@@ -120,7 +120,7 @@ func GenerateCert(signer crypto.Signer, ca string, sn *big.Int, name string) (st
 		NotAfter:     time.Now().Add(365 * 24 * time.Hour),
 		NotBefore:    time.Now(),
 		SubjectKeyId: keyID,
-		DNSNames:     []string{"localhost"},
+		DNSNames:     []string{"localhost", name},
 		IPAddresses:  []net.IP{net.ParseIP("127.0.0.1")},
 	}
 
