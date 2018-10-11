@@ -34,7 +34,7 @@ Usage: consul tls ca <subcommand> [options] filename-prefix
 
 	Create a CA
 
-		$ consul tls ca create consul-ca
+		$ consul tls ca create
 
   For more examples, ask for subcommand help or view the documentation.
 `

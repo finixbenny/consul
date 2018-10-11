@@ -162,6 +162,9 @@ Usage: consul tls cert
 
 	Create a new certificate
 
+	$ consul tls cert -client
+	==> saved consul-client.pem
+	==> saved consul-client-key.pem
 	$ consul tls cert -server
 	==> saved consul-server-dc1.pem
 	==> saved consul-server-dc1-key.pem

@@ -36,9 +36,13 @@ Usage: consul tls <subcommand> <subcommand> [options]
 
     $ consul tls ca create
 	
-  Create a certificate
+  Create a server certificate
 
-    $ consul tls cert create -ca-file consul-ca.pem -ca-key-file consul-ca-key.pem
+    $ consul tls cert create -server
+
+  Create a client certificate
+
+    $ consul tls cert create -client
 
   For more examples, ask for subcommand help or view the documentation.
 `
