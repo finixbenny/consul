@@ -10,6 +10,7 @@ import (
 	"encoding/pem"
 	"fmt"
 	"io"
+	"net"
 	"testing"
 	"time"
 
@@ -94,7 +95,7 @@ func TestGenerateCA(t *testing.T) {
 	require.Equal(t, cert.NotBefore.Format(time.ANSIC), time.Now().UTC().Format(time.ANSIC))
 	require.Equal(t, cert.NotAfter.Format(time.ANSIC), time.Now().AddDate(5, 0, 0).UTC().Format(time.ANSIC))
 
-	require.Equal(t, x509.KeyUsageCertSign, cert.KeyUsage)
+	require.Equal(t, x509.KeyUsageCertSign|x509.KeyUsageCRLSign, cert.KeyUsage)
 }
 
 func TestGenerateCert(t *testing.T) {
@@ -108,15 +109,17 @@ func TestGenerateCert(t *testing.T) {
 
 	sn, err = GenerateSerialNumber()
 	require.Nil(t, err)
-	name := "Consul Cert"
-	certificate, pk, err := GenerateCert(signer, ca, sn, name)
+	DNSNames := []string{"server.dc1.consul"}
+	IPAddresses := []net.IP{net.ParseIP("123.234.243.213")}
+	extKeyUsage := []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth}
+	certificate, pk, err := GenerateCert(signer, ca, sn, DNSNames, IPAddresses, extKeyUsage)
 	require.Nil(t, err)
 	require.NotEmpty(t, certificate)
 	require.NotEmpty(t, pk)
 
 	cert, err := ParseCert(certificate)
 	require.Nil(t, err)
-	require.Equal(t, cert.Subject.CommonName, name)
+	require.Equal(t, fmt.Sprintf("Consul Certificate %d", sn), cert.Subject.CommonName)
 	require.Equal(t, true, cert.BasicConstraintsValid)
 	signee, err := ParseSigner(pk)
 	require.Nil(t, err)
@@ -131,14 +134,12 @@ func TestGenerateCert(t *testing.T) {
 
 	// format so that we don't take anything smaller than second into account.
 	require.Equal(t, cert.NotBefore.Format(time.ANSIC), time.Now().UTC().Format(time.ANSIC))
-	require.Equal(t, cert.NotAfter.Format(time.ANSIC), time.Now().Add(time.Minute*60*24*365).UTC().Format(time.ANSIC))
+	require.Equal(t, cert.NotAfter.Format(time.ANSIC), time.Now().Add(time.Hour*24*365).UTC().Format(time.ANSIC))
 
 	require.Equal(t, x509.KeyUsageDigitalSignature|x509.KeyUsageKeyEncipherment, cert.KeyUsage)
+	require.Equal(t, extKeyUsage, cert.ExtKeyUsage)
 
 	// https://github.com/golang/go/blob/10538a8f9e2e718a47633ac5a6e90415a2c3f5f1/src/crypto/x509/verify.go#L414
-	require.Contains(t, cert.DNSNames, "localhost")
-	require.Equal(t, cert.IPAddresses[0].String(), "127.0.0.1")
-
-	// TODO
-	// - cli: no CN, SAN, no ServerAuth
+	require.Equal(t, DNSNames, cert.DNSNames)
+	require.True(t, IPAddresses[0].Equal(cert.IPAddresses[0]))
 }

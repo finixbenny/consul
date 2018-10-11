@@ -96,11 +96,18 @@ func GenerateCA(signer crypto.Signer, sn *big.Int, uris []*url.URL) (string, err
 }
 
 // GenerateCert generates a new certificate
-func GenerateCert(signer crypto.Signer, ca string, sn *big.Int, name string) (string, string, error) {
+func GenerateCert(signer crypto.Signer, ca string, sn *big.Int, DNSNames []string, IPAddresses []net.IP, extKeyUsage []x509.ExtKeyUsage) (string, string, error) {
+	parent, err := ParseCert(ca)
+	if err != nil {
+		return "", "", err
+	}
+
 	signee, pk, err := GeneratePrivateKey()
 	if err != nil {
 		return "", "", err
 	}
+
+	name := fmt.Sprintf("Consul Certificate %d", sn)
 
 	keyID, err := KeyId(signee.Public())
 	if err != nil {
@@ -112,21 +119,13 @@ func GenerateCert(signer crypto.Signer, ca string, sn *big.Int, name string) (st
 		Subject:               pkix.Name{CommonName: name},
 		BasicConstraintsValid: true,
 		KeyUsage:              x509.KeyUsageDigitalSignature | x509.KeyUsageKeyEncipherment,
-		ExtKeyUsage: []x509.ExtKeyUsage{
-			x509.ExtKeyUsageClientAuth,
-			x509.ExtKeyUsageServerAuth,
-		},
-		IsCA:         false,
-		NotAfter:     time.Now().Add(365 * 24 * time.Hour),
-		NotBefore:    time.Now(),
-		SubjectKeyId: keyID,
-		DNSNames:     []string{"localhost", name},
-		IPAddresses:  []net.IP{net.ParseIP("127.0.0.1")},
-	}
-
-	parent, err := ParseCert(ca)
-	if err != nil {
-		return "", "", err
+		ExtKeyUsage:           extKeyUsage,
+		IsCA:                  false,
+		NotAfter:              time.Now().AddDate(1, 0, 0),
+		NotBefore:             time.Now(),
+		SubjectKeyId:          keyID,
+		DNSNames:              DNSNames,
+		IPAddresses:           IPAddresses,
 	}
 
 	bs, err := x509.CreateCertificate(rand.Reader, &template, parent, signee.Public(), signer)

@@ -1,9 +1,11 @@
 package create
 
 import (
+	"crypto/x509"
 	"flag"
 	"fmt"
 	"io/ioutil"
+	"net"
 	"os"
 
 	"github.com/hashicorp/consul/agent/connect"
@@ -26,6 +28,7 @@ type cmd struct {
 	client bool
 	cli    bool
 	dc     string
+	domain string
 	help   string
 }
 
@@ -37,6 +40,7 @@ func (c *cmd) init() {
 	c.flags.BoolVar(&c.client, "client", false, "Generate client certificate")
 	c.flags.BoolVar(&c.cli, "cli", false, "Generate cli certificate")
 	c.flags.StringVar(&c.dc, "dc", "global", "Provide the datacenter")
+	c.flags.StringVar(&c.domain, "domain", "consul", "Provide the domain")
 	c.help = flags.Usage(help, c.flags)
 }
 
@@ -64,20 +68,36 @@ func (c *cmd) Run(args []string) int {
 		return 1
 	}
 
-	kind := ""
-	if c.server {
-		kind = "server"
-	} else if c.client {
-		kind = "client"
-	} else if c.cli {
-		kind = "cli"
-	} else {
-		c.UI.Error("Neither client or server - should not happen")
-	}
-
 	prefix := "consul"
 	if len(c.flags.Args()) > 0 {
 		prefix = c.flags.Args()[0]
+	}
+
+	var DNSNames []string
+	var IPAddresses []net.IP
+	var extKeyUsage []x509.ExtKeyUsage
+	var pkFileName, certFileName string
+
+	if c.server {
+		DNSNames = []string{fmt.Sprintf("server.%s.%s", c.dc, c.domain), "localhost"}
+		IPAddresses = []net.IP{net.ParseIP("127.0.0.1")}
+		extKeyUsage = []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth}
+		certFileName = fmt.Sprintf("%s-server.pem", prefix)
+		pkFileName = fmt.Sprintf("%s-server-key.pem", prefix)
+	} else if c.client {
+		DNSNames = []string{"localhost"}
+		IPAddresses = []net.IP{net.ParseIP("127.0.0.1")}
+		extKeyUsage = []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth}
+		certFileName = fmt.Sprintf("%s-client.pem", prefix)
+		pkFileName = fmt.Sprintf("%s-client-key.pem", prefix)
+	} else if c.cli {
+		DNSNames = []string{}
+		IPAddresses = []net.IP{}
+		certFileName = fmt.Sprintf("%s-cli.pem", prefix)
+		pkFileName = fmt.Sprintf("%s-cli-key.pem", prefix)
+	} else {
+		c.UI.Error("Neither client, cli nor server - should not happen")
+		return 1
 	}
 
 	cert, err := ioutil.ReadFile(c.ca)
@@ -103,29 +123,28 @@ func (c *cmd) Run(args []string) int {
 		return 1
 	}
 
-	name := fmt.Sprintf("%s.node.%s.consul", kind, c.dc)
-	pub, priv, err := connect.GenerateCert(signer, string(cert), sn, name)
+	pub, priv, err := connect.GenerateCert(signer, string(cert), sn, DNSNames, IPAddresses, extKeyUsage)
 	if err != nil {
 		c.UI.Error(err.Error())
 		return 1
 	}
 
-	fileName := fmt.Sprintf("%s-%s-key.pem", prefix, kind)
-	pkFile, err := os.Create(fileName)
-	if err != nil {
-		c.UI.Error(err.Error())
-		return 1
-	}
-	pkFile.WriteString(priv)
-	c.UI.Output("==> saved " + fileName)
-	fileName = fmt.Sprintf("%s-%s.pem", prefix, kind)
-	certFile, err := os.Create(fileName)
+	certFile, err := os.Create(certFileName)
 	if err != nil {
 		c.UI.Error(err.Error())
 		return 1
 	}
 	certFile.WriteString(pub)
-	c.UI.Output("==> saved " + fileName)
+	c.UI.Output("==> saved " + certFileName)
+
+	pkFile, err := os.Create(pkFileName)
+	if err != nil {
+		c.UI.Error(err.Error())
+		return 1
+	}
+	pkFile.WriteString(priv)
+	c.UI.Output("==> saved " + pkFileName)
+
 	return 0
 }
 
