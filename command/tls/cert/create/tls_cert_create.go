@@ -39,7 +39,7 @@ func (c *cmd) init() {
 	c.flags.BoolVar(&c.server, "server", false, "Generate server certificate")
 	c.flags.BoolVar(&c.client, "client", false, "Generate client certificate")
 	c.flags.BoolVar(&c.cli, "cli", false, "Generate cli certificate")
-	c.flags.StringVar(&c.dc, "dc", "global", "Provide the datacenter")
+	c.flags.StringVar(&c.dc, "dc", "dc1", "Provide the datacenter. Matters only for -server certificates.")
 	c.flags.StringVar(&c.domain, "domain", "consul", "Provide the domain")
 	c.help = flags.Usage(help, c.flags)
 }
@@ -82,8 +82,8 @@ func (c *cmd) Run(args []string) int {
 		DNSNames = []string{fmt.Sprintf("server.%s.%s", c.dc, c.domain), "localhost"}
 		IPAddresses = []net.IP{net.ParseIP("127.0.0.1")}
 		extKeyUsage = []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth}
-		certFileName = fmt.Sprintf("%s-server.pem", prefix)
-		pkFileName = fmt.Sprintf("%s-server-key.pem", prefix)
+		certFileName = fmt.Sprintf("%s-server-%s.pem", prefix, c.dc)
+		pkFileName = fmt.Sprintf("%s-server-%s-key.pem", prefix, c.dc)
 	} else if c.client {
 		DNSNames = []string{"localhost"}
 		IPAddresses = []net.IP{net.ParseIP("127.0.0.1")}
@@ -162,5 +162,14 @@ Usage: consul tls cert
 
 	Create a new certificate
 
-	$ consul tls cert -ca-file consul-ca.pem -ca-key-file consul-ca-key.pem
+	$ consul tls cert -server
+	==> saved consul-server-dc1.pem
+	==> saved consul-server-dc1-key.pem
+	$ consul tls cert -server -dc dc2
+	==> saved consul-server-dc2.pem
+	==> saved consul-server-dc2-key.pem
+	$ consul tls cert -server mycert
+	==> saved mycert-server-dc1.pem
+	==> saved mycert-server-dc1-key.pem
+	$ consul tls cert -server -ca-file consul-ca.pem -ca-key-file consul-ca-key.pem
 `
