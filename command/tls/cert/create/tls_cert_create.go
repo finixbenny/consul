@@ -10,6 +10,7 @@ import (
 
 	"github.com/hashicorp/consul/agent/connect"
 	"github.com/hashicorp/consul/command/flags"
+	"github.com/hashicorp/consul/command/tls"
 	"github.com/mitchellh/cli"
 )
 
@@ -82,30 +83,45 @@ func (c *cmd) Run(args []string) int {
 		DNSNames = []string{fmt.Sprintf("server.%s.%s", c.dc, c.domain), "localhost"}
 		IPAddresses = []net.IP{net.ParseIP("127.0.0.1")}
 		extKeyUsage = []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth}
-		certFileName = fmt.Sprintf("%s-server-%s.pem", prefix, c.dc)
-		pkFileName = fmt.Sprintf("%s-server-%s-key.pem", prefix, c.dc)
+		certFileName = fmt.Sprintf("%s-server-%s", prefix, c.dc)
+		pkFileName = fmt.Sprintf("%s-server-%s-key", prefix, c.dc)
 	} else if c.client {
 		DNSNames = []string{"localhost"}
 		IPAddresses = []net.IP{net.ParseIP("127.0.0.1")}
 		extKeyUsage = []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth}
-		certFileName = fmt.Sprintf("%s-client.pem", prefix)
-		pkFileName = fmt.Sprintf("%s-client-key.pem", prefix)
+		certFileName = fmt.Sprintf("%s-client", prefix)
+		pkFileName = fmt.Sprintf("%s-client-key", prefix)
 	} else if c.cli {
-		certFileName = fmt.Sprintf("%s-cli.pem", prefix)
-		pkFileName = fmt.Sprintf("%s-cli-key.pem", prefix)
+		certFileName = fmt.Sprintf("%s-cli", prefix)
+		pkFileName = fmt.Sprintf("%s-cli-key", prefix)
 	} else {
 		c.UI.Error("Neither client, cli nor server - should not happen")
 		return 1
 	}
 
+	max := 10000
+	for i := 0; i <= max; i++ {
+		tmpCert := fmt.Sprintf("%s-%d.pem", certFileName, i)
+		tmpPk := fmt.Sprintf("%s-%d.pem", pkFileName, i)
+		if tls.FileDoesNotExist(tmpCert) && tls.FileDoesNotExist(tmpPk) {
+			certFileName = tmpCert
+			pkFileName = tmpPk
+			break
+		}
+		if i == max {
+			c.UI.Error("Could not find a filename that doesn't already exist")
+			return 1
+		}
+	}
+
 	cert, err := ioutil.ReadFile(c.ca)
 	if err != nil {
-		c.UI.Error(err.Error())
+		c.UI.Error(fmt.Sprintf("Error reading CA: %s", err))
 		return 1
 	}
 	key, err := ioutil.ReadFile(c.key)
 	if err != nil {
-		c.UI.Error(err.Error())
+		c.UI.Error(fmt.Sprintf("Error reading CA key: %s", err))
 		return 1
 	}
 
@@ -156,19 +172,19 @@ func (c *cmd) Help() string {
 
 const synopsis = "Create a new certificate"
 const help = `
-Usage: consul tls cert
+Usage: consul tls cert create [options] [filename-prefix]
 
 	Create a new certificate
 
-	$ consul tls cert -client
-	==> saved consul-client.pem
-	==> saved consul-client-key.pem
 	$ consul tls cert -server
 	==> saved consul-server-dc1.pem
 	==> saved consul-server-dc1-key.pem
 	$ consul tls cert -server -dc dc2
 	==> saved consul-server-dc2.pem
 	==> saved consul-server-dc2-key.pem
+	$ consul tls cert -client
+	==> saved consul-client.pem
+	==> saved consul-client-key.pem
 	$ consul tls cert -server mycert
 	==> saved mycert-server-dc1.pem
 	==> saved mycert-server-dc1-key.pem

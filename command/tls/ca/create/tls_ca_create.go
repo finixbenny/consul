@@ -8,6 +8,7 @@ import (
 	"github.com/hashicorp/consul/agent/connect"
 
 	"github.com/hashicorp/consul/command/flags"
+	"github.com/hashicorp/consul/command/tls"
 	"github.com/mitchellh/cli"
 )
 
@@ -36,9 +37,21 @@ func (c *cmd) Run(args []string) int {
 		c.UI.Error(fmt.Sprintf("Failed to parse args: %v", err))
 		return 1
 	}
-	prefix := "consul-ca"
+	prefix := "consul"
 	if len(c.flags.Args()) > 0 {
 		prefix = c.flags.Args()[0]
+	}
+
+	certFileName := fmt.Sprintf("%s-ca.pem", prefix)
+	pkFileName := fmt.Sprintf("%s-ca-key.pem", prefix)
+
+	if !(tls.FileDoesNotExist(certFileName)) {
+		c.UI.Error(certFileName + " already exists.")
+		return 1
+	}
+	if !(tls.FileDoesNotExist(pkFileName)) {
+		c.UI.Error(pkFileName + " already exists.")
+		return 1
 	}
 
 	sn, err := connect.GenerateSerialNumber()
@@ -54,18 +67,18 @@ func (c *cmd) Run(args []string) int {
 	if err != nil {
 		c.UI.Error(err.Error())
 	}
-	caFile, err := os.Create(prefix + ".pem")
+	caFile, err := os.Create(certFileName)
 	if err != nil {
 		c.UI.Error(err.Error())
 	}
 	caFile.WriteString(ca)
-	c.UI.Output("==> saved " + prefix + ".pem")
-	pkFile, err := os.Create(prefix + "-key.pem")
+	c.UI.Output("==> saved " + certFileName)
+	pkFile, err := os.Create(pkFileName)
 	if err != nil {
 		c.UI.Error(err.Error())
 	}
 	pkFile.WriteString(pk)
-	c.UI.Output("==> saved " + prefix + "-key.pem")
+	c.UI.Output("==> saved " + pkFileName)
 
 	return 0
 }

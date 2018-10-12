@@ -1,6 +1,8 @@
 package tls
 
 import (
+	"os"
+
 	"github.com/hashicorp/consul/command/flags"
 	"github.com/mitchellh/cli"
 )
@@ -23,6 +25,13 @@ func (c *cmd) Help() string {
 	return flags.Usage(help, nil)
 }
 
+func FileDoesNotExist(file string) bool {
+	if _, err := os.Stat(file); os.IsNotExist(err) {
+		return true
+	}
+	return false
+}
+
 const synopsis = `Builtin helpers for creating CAs and certificates`
 const help = `
 Usage: consul tls <subcommand> <subcommand> [options]
@@ -35,6 +44,8 @@ Usage: consul tls <subcommand> <subcommand> [options]
   Create a CA
 
     $ consul tls ca create
+    ==> saved consul-ca.pem
+    ==> saved consul-ca-key.pem
 	
   Create a server certificate
 
