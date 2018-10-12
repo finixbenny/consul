@@ -80,7 +80,17 @@ func (c *cmd) Help() string {
 
 const synopsis = "Create a new consul CA"
 const help = `
-Usage: consul tls ca filename-prefix
+Usage: consul tls ca create [filename-prefix]
 
-  Create a new consul CA which is written to $filename-prefix
+	Create a new consul CA:
+	
+	$ consul tls ca create
+	==> saved consul-ca.pem
+	==> saved consul-ca-key.pem
+
+	Or save it with your own prefix:
+	
+	$ consul tls ca create my
+	==> saved my-ca.pem
+	==> saved my-ca-key.pem
 `

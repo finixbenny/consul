@@ -22,4 +22,9 @@ website:
 		--volume "$(shell pwd):/website" \
 		hashicorp/middleman-hashicorp:${VERSION}
 
+local:
+	@echo "==> Starting website locally"
+	@bundle exec middleman build --verbose --clean
+	@bundle exec middleman server
+
 .PHONY: build website

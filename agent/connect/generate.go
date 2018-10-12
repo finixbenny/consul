@@ -74,7 +74,7 @@ func GenerateCA(signer crypto.Signer, sn *big.Int, uris []*url.URL) (string, err
 		BasicConstraintsValid: true,
 		KeyUsage:              x509.KeyUsageCertSign | x509.KeyUsageCRLSign,
 		IsCA:                  true,
-		NotAfter:              time.Now().AddDate(5, 0, 0),
+		NotAfter:              time.Now().AddDate(10, 0, 0),
 		NotBefore:             time.Now(),
 		AuthorityKeyId:        keyID,
 		SubjectKeyId:          keyID,

@@ -35,6 +35,8 @@ Usage: consul tls ca <subcommand> [options] filename-prefix
 	Create a CA
 
 		$ consul tls ca create
+		==> saved consul-ca.pem
+		==> saved consul-ca-key.pem
 
   For more examples, ask for subcommand help or view the documentation.
 `

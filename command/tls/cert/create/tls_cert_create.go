@@ -39,8 +39,8 @@ func (c *cmd) init() {
 	c.flags.BoolVar(&c.server, "server", false, "Generate server certificate")
 	c.flags.BoolVar(&c.client, "client", false, "Generate client certificate")
 	c.flags.BoolVar(&c.cli, "cli", false, "Generate cli certificate")
-	c.flags.StringVar(&c.dc, "dc", "dc1", "Provide the datacenter. Matters only for -server certificates.")
-	c.flags.StringVar(&c.domain, "domain", "consul", "Provide the domain")
+	c.flags.StringVar(&c.dc, "dc", "dc1", "Provide the datacenter. Matters only for -server certificates")
+	c.flags.StringVar(&c.domain, "domain", "consul", "Provide the domain. Matters only for -server certificates")
 	c.help = flags.Usage(help, c.flags)
 }
 
@@ -91,8 +91,6 @@ func (c *cmd) Run(args []string) int {
 		certFileName = fmt.Sprintf("%s-client.pem", prefix)
 		pkFileName = fmt.Sprintf("%s-client-key.pem", prefix)
 	} else if c.cli {
-		DNSNames = []string{}
-		IPAddresses = []net.IP{}
 		certFileName = fmt.Sprintf("%s-cli.pem", prefix)
 		pkFileName = fmt.Sprintf("%s-cli-key.pem", prefix)
 	} else {
